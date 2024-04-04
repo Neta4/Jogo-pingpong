@@ -1,0 +1,103 @@
+import pygame
+import sys
+
+# Variáveis
+WIDTH = 600  # Largura da janela do jogo
+HEIGHT = 600  # Altura da janela do jogo
+BORDER = 10  # Espessura da borda
+RADIUS = 12  # Raio da bola
+PWIDTH = 120  # Largura da raquete
+PHEIGHT = 15  # Altura da raquete
+BALL_SPEED_X = 2  # Velocidade inicial da bola no eixo x
+BALL_SPEED_Y = 2  # Velocidade inicial da bola no eixo y
+PADDLE_SPEED = 5  # Velocidade da raquete
+LEFT_PLAYER = 0
+RIGHT_PLAYER = 1
+
+# Cores
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+
+# Inicialização do Pygame
+pygame.init()
+window = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("PongPong")
+
+# Função para desenhar as raquetes
+def draw_paddle(surface, color, position):
+    paddle_rect = pygame.Rect(position[0], position[1], PWIDTH, PHEIGHT)
+    pygame.draw.rect(surface, color, paddle_rect)
+
+# Função para desenhar a bola
+def draw_ball(surface, color, position):
+    ball_rect = pygame.Rect(position[0] - RADIUS, position[1] - RADIUS, RADIUS * 2, RADIUS * 2)
+    pygame.draw.circle(surface, color, ball_rect.center, RADIUS)
+
+# Variáveis para a pontuação
+scores = [0, 0]
+
+# Posições iniciais da bola e das raquetes
+ball_position = [WIDTH // 2, HEIGHT // 2]
+ball_velocity = [BALL_SPEED_X, BALL_SPEED_Y]
+left_paddle_position = [(WIDTH - PWIDTH) // 2, HEIGHT - PHEIGHT - BORDER]
+right_paddle_position = [(WIDTH - PWIDTH) // 2, BORDER]
+
+# Loop principal do jogo
+clock = pygame.time.Clock()
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    # Movimento das raquetes
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        left_paddle_position[0] -= PADDLE_SPEED
+    if keys[pygame.K_RIGHT]:
+        left_paddle_position[0] += PADDLE_SPEED
+    if keys[pygame.K_a]:
+        right_paddle_position[0] -= PADDLE_SPEED
+    if keys[pygame.K_d]:
+        right_paddle_position[0] += PADDLE_SPEED
+
+    # Movimento da bola
+    ball_position[0] += ball_velocity[0]
+    ball_position[1] += ball_velocity[1]
+
+    # Verificação de colisão com as bordas e pontuação
+    if ball_position[0] <= BORDER + RADIUS:
+        scores[RIGHT_PLAYER] += 1
+        ball_velocity[0] *= -1
+    elif ball_position[0] >= WIDTH - BORDER - RADIUS:
+        scores[LEFT_PLAYER] += 1
+        ball_velocity[0] *= -1
+    if ball_position[1] <= BORDER + RADIUS:
+        ball_velocity[1] *= -1
+    elif ball_position[1] >= HEIGHT - BORDER - RADIUS:
+        ball_velocity[1] *= -1
+
+    # Verificação de colisão com as raquetes
+    left_paddle_rect = pygame.Rect(left_paddle_position[0], left_paddle_position[1], PWIDTH, PHEIGHT)
+    right_paddle_rect = pygame.Rect(right_paddle_position[0], right_paddle_position[1], PWIDTH, PHEIGHT)
+    ball_rect = pygame.Rect(ball_position[0] - RADIUS, ball_position[1] - RADIUS, RADIUS * 2, RADIUS * 2)
+
+    if ball_rect.colliderect(left_paddle_rect) or ball_rect.colliderect(right_paddle_rect):
+        ball_velocity[1] *= -1
+
+    # Atualização da tela
+    window.fill(BLACK)  # Limpa a tela com a cor preta
+
+    # Desenha as raquetes e a bola
+    draw_paddle(window, WHITE, left_paddle_position)
+    draw_paddle(window, WHITE, right_paddle_position)
+    draw_ball(window, WHITE, ball_position)
+
+    # Exibe a pontuação na tela
+    font = pygame.font.Font(None, 36)
+    text_surface = font.render(f"{scores[LEFT_PLAYER]} : {scores[RIGHT_PLAYER]}", True, WHITE)
+    text_rect = text_surface.get_rect(topleft=(20, 20))  # Posição no canto superior esquerdo
+    window.blit(text_surface, text_rect)
+
+    pygame.display.flip()  # Atualiza a tela visível
+    clock.tick(60)  # Limita a taxa de quadros a 60 FPS
